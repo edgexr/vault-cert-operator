@@ -21,4 +21,11 @@ spec:
       - name: shell-operator
         image: venkytv/shell-operator:vault-cert
         imagePullPolicy: Always
+        env:
+        - name: VAULT_ADDR
+          value: https://example.com
+        - name: VAULT_ROLE_ID
+          value: foo
+        - name: VAULT_SECRET_ID
+          value: bar
       serviceAccountName: crd-vaultcert-acc

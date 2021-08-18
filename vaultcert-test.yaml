@@ -4,5 +4,5 @@ metadata:
   name: test.mobiledgex.net
 spec:
   domain:
-    - test.example.com
+    - test.mobiledgex.net
   secretName: test-mobiledgex-net-tls
