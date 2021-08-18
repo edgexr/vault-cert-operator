@@ -54,13 +54,13 @@ def create_tls_secret(binding):
                        check=False, stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL)
     if p.returncode == 0:
-        print(f"Secret exists: {secretname}")
+        print(f"Secret {secretname} exists in namespace {namespace}")
     else:
         # Create secret
         crt = tempfile.NamedTemporaryFile(mode="w", suffix=".crt", delete=False)
         key = tempfile.NamedTemporaryFile(mode="w", suffix=".key", delete=False)
 
-        print(f"Creating TLS secret {secretname} for {name}")
+        print(f"Creating TLS secret {secretname} for {name} in namespace {namespace}")
         vcert = vault_get_cert(vault_login(), domains)
 
         crt.write(vcert["cert"])
