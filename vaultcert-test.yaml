@@ -1,0 +1,8 @@
+apiVersion: stable.mobiledgex.net/v1alpha1
+kind: VaultCert
+metadata:
+  name: test.mobiledgex.net
+spec:
+  domain:
+    - test.example.com
+  secretName: test-mobiledgex-net-tls

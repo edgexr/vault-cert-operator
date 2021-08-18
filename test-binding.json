@@ -1,0 +1,52 @@
+[
+  {
+    "binding": "kubernetes",
+    "objects": [
+      {
+        "object": {
+          "apiVersion": "stable.mobiledgex.net/v1alpha1",
+          "kind": "VaultCert",
+          "metadata": {
+            "annotations": {
+              "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"stable.mobiledgex.net/v1alpha1\",\"kind\":\"VaultCert\",\"metadata\":{\"annotations\":{},\"name\":\"test.mobiledgex.net\",\"namespace\":\"default\"},\"spec\":{\"domain\":[\"test.example.com\"]}}\n"
+            },
+            "creationTimestamp": "2021-08-18T13:13:26Z",
+            "generation": 1,
+            "managedFields": [
+              {
+                "apiVersion": "stable.mobiledgex.net/v1alpha1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                  "f:metadata": {
+                    "f:annotations": {
+                      ".": {},
+                      "f:kubectl.kubernetes.io/last-applied-configuration": {}
+                    }
+                  },
+                  "f:spec": {
+                    ".": {},
+                    "f:domain": {}
+                  }
+                },
+                "manager": "kubectl-client-side-apply",
+                "operation": "Update",
+                "time": "2021-08-18T13:13:26Z"
+              }
+            ],
+            "name": "test.mobiledgex.net",
+            "namespace": "default",
+            "resourceVersion": "22597",
+            "uid": "cbed332f-18a5-426f-8608-b04873d31fea"
+          },
+          "spec": {
+            "domain": [
+              "test.example.com"
+            ],
+            "secretName": "test-mobiledgex-net-tls"
+          }
+        }
+      }
+    ],
+    "type": "Synchronization"
+  }
+]
