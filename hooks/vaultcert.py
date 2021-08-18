@@ -86,7 +86,7 @@ def handle_events():
             for binding in binding["objects"]:
                 create_tls_secret(binding)
         elif type == "Event":
-            get_vault_cert(binding)
+            create_tls_secret(binding)
         else:
             print(f"Unhandled event of type: {type}")
 
