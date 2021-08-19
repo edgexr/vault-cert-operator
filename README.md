@@ -1,5 +1,13 @@
 ## Installation
 
+Configure vault parameters in the manifest
+
+```
+vi shell-operator-deploy.yaml
+```
+
+Deploy
+
 ```
 kubectl create ns vault-cert
 kubectl apply -f shell-operator-rbac.yaml
