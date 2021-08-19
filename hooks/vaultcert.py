@@ -3,10 +3,11 @@
 import argparse
 import json
 import os
-import requests
 import subprocess
 import sys
 import tempfile
+
+from utils.vault import vault_login, vault_get_cert
 
 vault_addr = os.environ["VAULT_ADDR"]
 vault_role_id = os.environ["VAULT_ROLE_ID"]
@@ -24,22 +25,6 @@ def dump_config():
         ],
     }
     print(json.dumps(config))
-
-def vault_login():
-    r = requests.post(f"{vault_addr}/v1/auth/approle/login",
-                      json={"role_id": vault_role_id,
-                            "secret_id": vault_secret_id})
-    r.raise_for_status()
-    return r.json()["auth"]["client_token"]
-
-def vault_get_cert(token, domainlist):
-    domains = ",".join(sorted(set(domainlist)))
-    url = f"{vault_addr}/v1/certs/cert/{domains}"
-    r = requests.get(url, headers={"X-Vault-Token": token})
-    if r.status_code != requests.codes.ok:
-        sys.exit(f"{url}: {r.status_code} {r.text}")
-
-    return r.json()["data"]
 
 def create_tls_secret(binding):
     meta = binding["object"]["metadata"]
@@ -62,7 +47,8 @@ def create_tls_secret(binding):
         key = tempfile.NamedTemporaryFile(mode="w", suffix=".key", delete=False)
 
         print(f"Creating TLS secret {secretname} for {name} in namespace {namespace}")
-        vcert = vault_get_cert(vault_login(), domains)
+        token = vault_login(vault_addr, vault_role_id, vault_secret_id)
+        vcert = vault_get_cert(vault_addr, token, domains)
 
         crt.write(vcert["cert"])
         crt.close()
