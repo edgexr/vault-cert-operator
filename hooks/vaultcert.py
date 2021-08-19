@@ -5,6 +5,7 @@ import json
 import os
 import requests
 import subprocess
+import sys
 import tempfile
 
 vault_addr = os.environ["VAULT_ADDR"]
@@ -18,7 +19,7 @@ def dump_config():
             {
                 "apiVersion": "stable.mobiledgex.net/v1alpha1",
                 "kind": "VaultCert",
-                "executeHookOnEvent": [ "Added", "Modified" ]
+                "executeHookOnEvent": [ "Added", "Modified", "Deleted" ]
             },
         ],
     }
@@ -36,7 +37,7 @@ def vault_get_cert(token, domainlist):
     url = f"{vault_addr}/v1/certs/cert/{domains}"
     r = requests.get(url, headers={"X-Vault-Token": token})
     if r.status_code != requests.codes.ok:
-        os.exit(f"{url}: {r.status_code} {r.text}")
+        sys.exit(f"{url}: {r.status_code} {r.text}")
 
     return r.json()["data"]
 
@@ -77,6 +78,18 @@ def create_tls_secret(binding):
         os.unlink(crt.name)
         os.unlink(key.name)
 
+def delete_tls_secret(binding):
+    meta = binding["object"]["metadata"]
+    name = meta["name"]
+    namespace = meta["namespace"]
+
+    spec = binding["object"]["spec"]
+    domains = spec["domain"]
+    secretname = spec["secretName"]
+
+    p = subprocess.run(["kubectl", f"--namespace={namespace}",
+                        "delete", "secret", secretname], check=True)
+
 def handle_events():
     with open(os.environ["BINDING_CONTEXT_PATH"]) as f:
         context = json.load(f)
@@ -86,9 +99,21 @@ def handle_events():
             for binding in binding["objects"]:
                 create_tls_secret(binding)
         elif type == "Event":
-            create_tls_secret(binding)
+            eventType = binding["watchEvent"]
+            if eventType == "Added":
+                create_tls_secret(binding)
+            elif eventType == "Deleted":
+                delete_tls_secret(binding)
+            elif eventType == "Modified":
+                try:
+                    delete_tls_secret(binding)
+                except Exception as e:
+                    print("Ignoring error deleting secret")
+                create_tls_secret(binding)
+            else:
+                print(f"Unknown event type: {eventType}")
         else:
-            print(f"Unhandled event of type: {type}")
+            print(f"Unhandled binding of type: {type}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
