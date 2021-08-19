@@ -22,6 +22,14 @@ in the VaultCert request:
 kubectl get secret test-mobiledgex-net-tls
 ```
 
+The cert will be created in the namespace the VaultCert request is in.
+
+```
+kubectl create ns test
+kubectl -n test apply -f vaultcert-test.yaml
+kubectl -n test get secret test-mobiledgex-net-tls
+```
+
 ## Troubleshooting
 
 Check the logs of the operator:
