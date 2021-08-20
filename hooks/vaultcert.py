@@ -2,16 +2,13 @@
 
 import argparse
 import json
+import logging
 import os
-import subprocess
-import sys
-import tempfile
 
 from utils.vault import vault_login, vault_get_cert
+from utils.kubernetes import kubectl, create_tls_secret, delete_tls_secret
 
-vault_addr = os.environ["VAULT_ADDR"]
-vault_role_id = os.environ["VAULT_ROLE_ID"]
-vault_secret_id = os.environ["VAULT_SECRET_ID"]
+LOG_LEVEL = logging.INFO
 
 def dump_config():
     config = {
@@ -25,56 +22,6 @@ def dump_config():
         ],
     }
     print(json.dumps(config))
-
-def create_tls_secret(binding):
-    meta = binding["object"]["metadata"]
-    name = meta["name"]
-    namespace = meta["namespace"]
-
-    spec = binding["object"]["spec"]
-    domains = spec["domain"]
-    secretname = spec["secretName"]
-
-    p = subprocess.run(["kubectl", f"--namespace={namespace}",
-                        "get", "secret", secretname],
-                       check=False, stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL)
-    if p.returncode == 0:
-        print(f"Secret {secretname} exists in namespace {namespace}")
-    else:
-        # Create secret
-        crt = tempfile.NamedTemporaryFile(mode="w", suffix=".crt", delete=False)
-        key = tempfile.NamedTemporaryFile(mode="w", suffix=".key", delete=False)
-
-        print(f"Creating TLS secret {secretname} for {name} in namespace {namespace}")
-        token = vault_login(vault_addr, vault_role_id, vault_secret_id)
-        vcert = vault_get_cert(vault_addr, token, domains)
-
-        crt.write(vcert["cert"])
-        crt.close()
-
-        key.write(vcert["key"])
-        key.close()
-
-        subprocess.run(["kubectl", f"--namespace={namespace}",
-                        "create", "secret", "tls",
-                        secretname, f"--cert={crt.name}",
-                        f"--key={key.name}"], check=True)
-
-        os.unlink(crt.name)
-        os.unlink(key.name)
-
-def delete_tls_secret(binding):
-    meta = binding["object"]["metadata"]
-    name = meta["name"]
-    namespace = meta["namespace"]
-
-    spec = binding["object"]["spec"]
-    domains = spec["domain"]
-    secretname = spec["secretName"]
-
-    p = subprocess.run(["kubectl", f"--namespace={namespace}",
-                        "delete", "secret", secretname], check=True)
 
 def handle_events():
     with open(os.environ["BINDING_CONTEXT_PATH"]) as f:
@@ -91,10 +38,7 @@ def handle_events():
             elif eventType == "Deleted":
                 delete_tls_secret(binding)
             elif eventType == "Modified":
-                try:
-                    delete_tls_secret(binding)
-                except Exception as e:
-                    print("Ignoring error deleting secret")
+                delete_tls_secret(binding)
                 create_tls_secret(binding)
             else:
                 print(f"Unknown event type: {eventType}")
@@ -105,6 +49,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", action="store_true")
     args = parser.parse_args()
+
+    logging.basicConfig(level=LOG_LEVEL, format="[%(levelname)s] %(message)s")
 
     if args.config:
         dump_config()
