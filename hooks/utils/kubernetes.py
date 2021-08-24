@@ -1,7 +1,9 @@
+import base64
 import logging
 import os
 import subprocess
 import tempfile
+from yaml import load, dump, Loader, Dumper
 
 from utils.vault import vault_login, vault_get_cert
 
@@ -75,3 +77,20 @@ def delete_tls_secret(binding):
         else:
             raise Exception(f"Error deleting secret {secretname} ({namespace}): {p.stderr}")
 
+def get_tls_cert_from_secret(secretname, namespace):
+    p = kubectl(["get", "secret", secretname], namespace=namespace)
+    secret = load(p.stdout, Loader=Loader)
+    return base64.b64decode(secret["data"]["tls.crt"]).decode('ascii')
+
+def patch_tls_cert_in_secret(secretname, namespace, cert):
+    logging.info(f"Patching {secretname} in namespace {namespace}")
+    b64cert = base64.b64encode(cert["cert"].encode("ascii")).decode("ascii")
+    b64key = base64.b64encode(cert["key"].encode("ascii")).decode("ascii")
+    patch = dump({
+        "data": {
+            "tls.crt": b64cert,
+            "tls.key": b64key,
+        },
+    }, Dumper=Dumper)
+    kubectl(["patch", "secret", secretname, "--patch", patch],
+            namespace=namespace)

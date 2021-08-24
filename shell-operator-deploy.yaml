@@ -28,4 +28,6 @@ spec:
           value: foo
         - name: VAULT_SECRET_ID
           value: bar
+        - name: DEBUG
+          value: "false"
       serviceAccountName: crd-vaultcert-acc
