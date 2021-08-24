@@ -45,3 +45,8 @@ Check the logs of the operator:
 ```
 kubectl -n vault-cert logs -f -l operator=shell-operator
 ```
+
+## Building the docker image
+
+docker buildx build --platform linux/amd64,linux/arm64 \
+	-t $REGISTRY/shell-operator:vault-cert --push .
