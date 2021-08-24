@@ -25,8 +25,10 @@ def dump_config():
         ],
     }
     if os.environ.get("DEBUG") == "true":
-        logging.info("Debug mode: setting update schedule to 2 minutes")
-        config["schedule"][0]["crontab"] = "*/2 * * * *"
+        config["schedule"].append({
+            "name": "Debug mode: update certs every two minutes",
+            "crontab": "*/2 * * * *",
+        })
 
     print(json.dumps(config))
 
