@@ -14,7 +14,11 @@ def vault_login():
     return r.json()["auth"]["client_token"]
 
 def vault_cert_domain(domainlist):
-    return ",".join(sorted(set(domainlist))).replace("*", "_")
+    if isinstance(domainlist, list):
+        d = ",".join(sorted(set(domainlist)))
+    else:
+        d = domainlist
+    return d.replace("*", "_")
 
 def vault_get_cert(token, domainlist):
     domain = vault_cert_domain(domainlist)
